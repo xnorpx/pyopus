@@ -46,6 +46,9 @@ __all__ = [
         'decoder_get_pitch',
         'encoder_get_bandwidth',
         'decoder_get_bandwidth',
+
+        'decoder_set_gain',
+        'decoder_get_gain',
         ]
 
 import decorator
@@ -273,6 +276,15 @@ def encoder_get_bandwidth(st):
 
 def decoder_get_bandwidth(st):
     return _get_int(decoder_ctl, st, constants.GET_BANDWIDTH_REQUEST)
+
+
+# Decoder CTLs
+def decoder_set_gain(st, x):
+    _set_int(decoder_ctl, st, constants.SET_GAIN_REQUEST, x)
+
+
+def decoder_get_gain(st):
+    return _get_int(decoder_ctl, st, constants.GET_GAIN_REQUEST)
 
 
 # vim:set ai et ts=4 sw=4 sts=4 fenc=utf-8:
