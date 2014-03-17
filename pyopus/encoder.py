@@ -8,9 +8,9 @@ __all__ = [
         'OpusEncoder',
         ]
 
-from . import binding
-from . import llinterface
 from . import base
+from . import llinterface
+from . import ctl
 from . import utils
 
 
@@ -40,6 +40,22 @@ class OpusEncoder(base.OpusCodec):
                 self.channels,
                 self.application,
                 )
+
+    def reset_state(self):
+        ctl.encoder_reset_state(self._state)
+
+    @property
+    def final_range(self):
+        return ctl.encoder_get_final_range(self._state)
+
+    @property
+    def pitch(self):
+        return ctl.encoder_get_pitch(self._state)
+
+    @property
+    def bandwidth(self):
+        return ctl.encoder_get_bandwidth(self._state)
+
 
 
 # vim:set ai et ts=4 sw=4 sts=4 fenc=utf-8:
