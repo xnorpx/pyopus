@@ -37,6 +37,15 @@ __all__ = [
         'encoder_get_expert_frame_duration',
         'encoder_set_prediction_disabled',
         'encoder_get_prediction_disabled',
+
+        'encoder_reset_state',
+        'decoder_reset_state',
+        'encoder_get_final_range',
+        'decoder_get_final_range',
+        'encoder_get_pitch',
+        'decoder_get_pitch',
+        'encoder_get_bandwidth',
+        'decoder_get_bandwidth',
         ]
 
 import decorator
@@ -54,12 +63,22 @@ def _new_intptr():
     return ffi.new('int[1]')
 
 
+def _new_uintptr():
+    return ffi.new('unsigned int[1]')
+
+
 def _set_int(fn, st, request, value):
     return fn(st, request, _cast_int(value))
 
 
 def _get_int(fn, st, request):
     result_p = _new_intptr()
+    fn(st, request, result_p)
+    return result_p[0]
+
+
+def _get_uint(fn, st, request):
+    result_p = _new_uintptr()
     fn(st, request, result_p)
     return result_p[0]
 
@@ -221,6 +240,39 @@ def encoder_get_prediction_disabled(st):
             st,
             constants.GET_PREDICTION_DISABLED_REQUEST,
             )
+
+
+# Generic CTLs
+def encoder_reset_state(st):
+    encoder_ctl(st, constants.RESET_STATE)
+
+
+def decoder_reset_state(st):
+    decoder_ctl(st, constants.RESET_STATE)
+
+
+def encoder_get_final_range(st):
+    return _get_uint(encoder_ctl, st, constants.GET_FINAL_RANGE_REQUEST)
+
+
+def decoder_get_final_range(st):
+    return _get_uint(decoder_ctl, st, constants.GET_FINAL_RANGE_REQUEST)
+
+
+def encoder_get_pitch(st):
+    return _get_int(encoder_ctl, st, constants.GET_PITCH_REQUEST)
+
+
+def decoder_get_pitch(st):
+    return _get_int(decoder_ctl, st, constants.GET_PITCH_REQUEST)
+
+
+def encoder_get_bandwidth(st):
+    return _get_int(encoder_ctl, st, constants.GET_BANDWIDTH_REQUEST)
+
+
+def decoder_get_bandwidth(st):
+    return _get_int(decoder_ctl, st, constants.GET_BANDWIDTH_REQUEST)
 
 
 # vim:set ai et ts=4 sw=4 sts=4 fenc=utf-8:
