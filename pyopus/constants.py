@@ -69,6 +69,7 @@ __all__ = [
         'FRAMESIZE_20_MS',
         'FRAMESIZE_40_MS',
         'FRAMESIZE_60_MS',
+        'RESET_STATE',
         ]
 
 from .binding import C
@@ -143,6 +144,8 @@ FRAMESIZE_10_MS = C.OPUS_FRAMESIZE_10_MS
 FRAMESIZE_20_MS = C.OPUS_FRAMESIZE_20_MS
 FRAMESIZE_40_MS = C.OPUS_FRAMESIZE_40_MS
 FRAMESIZE_60_MS = C.OPUS_FRAMESIZE_60_MS
+
+RESET_STATE = C.OPUS_RESET_STATE
 
 
 # vim:set ai et ts=4 sw=4 sts=4 fenc=utf-8:
