@@ -35,6 +35,7 @@ def check_channels(channels):
                 ' only 1 or 2 are supported'
                 )
 
+
 def check_application(application):
     if application not in _SUPPORTED_APPLICATIONS:
         raise ValueError(
