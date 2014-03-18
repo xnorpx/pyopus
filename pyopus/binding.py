@@ -14,10 +14,10 @@ import cffi
 ffi = cffi.FFI()
 ffi.cdef('''
 /* opus_types.h */
-typedef short opus_int16;
-typedef unsigned short opus_uint16;
-typedef int opus_int32;
-typedef unsigned int opus_uint32;
+typedef int16_t opus_int16;
+typedef uint16_t opus_uint16;
+typedef int32_t opus_int32;
+typedef uint32_t opus_uint32;
 
 typedef int opus_int;
 typedef long long opus_int64;
