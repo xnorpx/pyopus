@@ -101,9 +101,13 @@ def encoder_init(st, Fs, channels, application):
 #         unsigned char *data,
 #         opus_int32 max_data_bytes
 #         );
-def encode(st, pcm, frame_size):
-    # TODO
-    pass
+def encode(st, pcm, frame_size, data, max_data_bytes):
+    result = C.opus_encode(st, pcm, frame_size, data, max_data_bytes)
+
+    if result < 0:
+        raise OpusError(result)
+
+    return result
 
 
 # opus_int32 opus_encode_float(
@@ -113,9 +117,13 @@ def encode(st, pcm, frame_size):
 #         unsigned char *data,
 #         opus_int32 max_data_bytes
 #         );
-def encode_float(st, pcm, frame_size):
-    # TODO
-    pass
+def encode_float(st, pcm, frame_size, data, max_data_bytes):
+    result = C.opus_encode_float(st, pcm, frame_size, data, max_data_bytes)
+
+    if result < 0:
+        raise OpusError(result)
+
+    return result
 
 
 # void opus_encoder_destroy(OpusEncoder *st);
@@ -165,9 +173,13 @@ def decoder_init(st, Fs, channels):
 #         int frame_size,
 #         int decode_fec
 #         );
-def decode(st, data, frame_size, decode_fec):
-    # TODO
-    pass
+def decode(st, data, len, pcm, frame_size, decode_fec):
+    result = C.opus_decode(st, data, len, pcm, frame_size, decode_fec)
+
+    if result < 0:
+        raise OpusError(result)
+
+    return result
 
 
 # int opus_decode_float(
@@ -178,9 +190,13 @@ def decode(st, data, frame_size, decode_fec):
 #         int frame_size,
 #         int decode_fec
 #         );
-def decode_float(st, data, len, decode_fec):
-    # TODO
-    pass
+def decode_float(st, data, len, pcm, frame_size, decode_fec):
+    result = C.opus_decode_float(st, data, len, pcm, frame_size, decode_fec)
+
+    if result < 0:
+        raise OpusError(result)
+
+    return result
 
 
 # int opus_decoder_ctl(OpusDecoder *st, int request, ...);
