@@ -33,6 +33,14 @@ class OpusEncoder(base.OpusCodec):
         self._channels = channels
         self._mode = application
 
+        # dispatch to encode functions with different sanity checking,
+        # based on channel count
+        self._do_encode_dispatch = (
+                self._stereo_encode
+                if channels == 2
+                else self._mono_encode
+                )
+
         # initialize state
         super(OpusEncoder, self).__init__()
 
@@ -55,18 +63,18 @@ class OpusEncoder(base.OpusCodec):
                 self._mode,
                 )
 
-    def _do_encode(self, encoder_fn, pcm):
+    def _stereo_encode(self, encoder_fn, pcm):
         # basic frame-size check
-        len_pcm = len(pcm)
-        if self._channels == 2:
-            frame_size, rem = divmod(len_pcm, 2)
-            if rem != 0:
-                raise ValueError(
-                        'PCM data length is not even for stereo input'
-                        )
-        else:
-            frame_size = len_pcm
+        frame_size, rem = divmod(len(pcm), 2)
+        if rem != 0:
+            raise ValueError('PCM data length is not even for stereo input')
 
+        return self._do_actual_encode(encoder_fn, pcm, frame_size)
+
+    def _mono_encode(self, encoder_fn, pcm):
+        return self._do_actual_encode(encoder_fn, pcm, len(pcm))
+
+    def _do_actual_encode(self, encoder_fn, pcm, frame_size):
         with self._buf_lock:
             len_payload = encoder_fn(
                     self._state,
@@ -79,10 +87,10 @@ class OpusEncoder(base.OpusCodec):
 
     # Encoding functions
     def encode(self, pcm):
-        return self._do_encode(llinterface.encode, pcm)
+        return self._do_encode_dispatch(llinterface.encode, pcm)
 
     def encode_float(self, pcm):
-        return self._do_encode(llinterface.encode_float, pcm)
+        return self._do_encode_dispatch(llinterface.encode_float, pcm)
 
     # Generic CTLs
     def reset_state(self):
