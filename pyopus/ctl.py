@@ -24,8 +24,8 @@ __all__ = [
         'encoder_get_application',
         'encoder_get_sample_rate',
         'encoder_get_lookahead',
-        'encoder_set_inbound_fec',
-        'encoder_get_inbound_fec',
+        'encoder_set_inband_fec',
+        'encoder_get_inband_fec',
         'encoder_set_packet_loss_perc',
         'encoder_get_packet_loss_perc',
         'encoder_set_dtx',
@@ -176,11 +176,11 @@ def encoder_get_lookahead(st):
     return _get_int(encoder_ctl, st, constants.GET_LOOKAHEAD_REQUEST)
 
 
-def encoder_set_inbound_fec(st, enabled):
+def encoder_set_inband_fec(st, enabled):
     _set_bool(encoder_ctl, st, constants.SET_INBAND_FEC_REQUEST, enabled)
 
 
-def encoder_get_inbound_fec(st):
+def encoder_get_inband_fec(st):
     return _get_bool(encoder_ctl, st, constants.GET_INBAND_FEC_REQUEST)
 
 
