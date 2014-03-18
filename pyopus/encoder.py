@@ -8,10 +8,16 @@ __all__ = [
         'OpusEncoder',
         ]
 
+from threading import Lock
+
 from . import base
+from . import binding
 from . import llinterface
 from . import ctl
 from . import utils
+
+# slightly larger than the recommended size of 4000 bytes, which is OK
+PAYLOAD_BUFFER_SIZE = 4096
 
 
 class OpusEncoder(base.OpusCodec):
@@ -30,6 +36,14 @@ class OpusEncoder(base.OpusCodec):
         # initialize state
         super(OpusEncoder, self).__init__()
 
+        # output payload buffer
+        # Since the codec is stateful, allowing reentrancy is pointless.
+        # Just make one output buffer to avoid repeated memory allocations
+        # (and deallocations), and lock it properly.
+        self._out = binding.ffi.new('char[]', PAYLOAD_BUFFER_SIZE)
+        self._buf = binding.ffi.buffer(self._out)
+        self._buf_lock = Lock()
+
     def _get_state_size(self):
         return llinterface.encoder_get_size(self._channels)
 
@@ -40,6 +54,35 @@ class OpusEncoder(base.OpusCodec):
                 self._channels,
                 self._mode,
                 )
+
+    def _do_encode(self, encoder_fn, pcm):
+        # basic frame-size check
+        len_pcm = len(pcm)
+        if self._channels == 2:
+            frame_size, rem = divmod(len_pcm, 2)
+            if rem != 0:
+                raise ValueError(
+                        'PCM data length is not even for stereo input'
+                        )
+        else:
+            frame_size = len_pcm
+
+        with self._buf_lock:
+            len_payload = encoder_fn(
+                    self._state,
+                    pcm,
+                    frame_size,
+                    self._out,
+                    PAYLOAD_BUFFER_SIZE,
+                    )
+            return self._buf[:len_payload]
+
+    # Encoding functions
+    def encode(self, pcm):
+        return self._do_encode(llinterface.encode, pcm)
+
+    def encode_float(self, pcm):
+        return self._do_encode(llinterface.encode_float, pcm)
 
     # Generic CTLs
     def reset_state(self):
