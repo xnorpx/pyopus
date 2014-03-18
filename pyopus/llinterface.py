@@ -220,29 +220,89 @@ def decoder_destroy(st):
 #         opus_int16 size[48],
 #         int *payload_offset
 #         );
+# This is an internal function according to the libopus documentation, so
+# we don't wrap it here.
+
 # int opus_packet_get_bandwidth(const unsigned char *data);
+def packet_get_bandwidth(data):
+    result = C.opus_packet_get_bandwidth(data)
+
+    if result < 0:
+        # actually it is an OPUS_INVALID_PACKET, according to docs
+        raise OpusError(result)
+
+    return result
+
+
 # int opus_packet_get_samples_per_frame(
 #         const unsigned char *data,
 #         opus_int32 Fs
 #         );
+def packet_get_samples_per_frame(data, Fs):
+    result = C.opus_packet_get_samples_per_frame(data, Fs)
+
+    if result < 0:
+        raise OpusError(result)
+
+    return result
+
+
 # int opus_packet_get_nb_channels(const unsigned char *data);
+def packet_get_nb_channels(data):
+    result = C.opus_packet_get_nb_channels(data)
+
+    if result < 0:
+        raise OpusError(result)
+
+    return result
+
+
 # int opus_packet_get_nb_frames(const unsigned char packet[], opus_int32 len);
+def packet_get_nb_frames(packet, len):
+    result = C.opus_packet_get_nb_frames(packet, len)
+
+    if result < 0:
+        raise OpusError(result)
+
+    return result
+
+
 # int opus_packet_get_nb_samples(
 #         const unsigned char packet[],
 #         opus_int32 len,
 #         opus_int32 Fs
 #         );
+def packet_get_nb_samples(packet, len, Fs):
+    result = C.opus_packet_get_nb_samples(packet, len, Fs)
+
+    if result < 0:
+        raise OpusError(result)
+
+    return result
+
+
 # int opus_decoder_get_nb_samples(
 #         const OpusDecoder *dec,
 #         const unsigned char packet[],
 #         opus_int32 len
 #         );
+def decoder_get_nb_samples(dec, packet, len):
+    result = C.opus_decoder_get_nb_samples(dec, packet, len)
+
+    if result < 0:
+        raise OpusError(result)
+
+    return result
+
+
 # void opus_pcm_soft_clip(
 #         float *pcm,
 #         int frame_size,
 #         int channels,
 #         float *softclip_mem
 #         );
+def pcm_soft_clip(pcm, frame_size, channels, softclip_mem):
+    C.opus_pcm_soft_clip(pcm, frame_size, channels, softclip_mem)
 
 
 # int opus_repacketizer_get_size(void);
