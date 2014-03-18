@@ -35,7 +35,7 @@ Roadmap
 
 The following things are to be finished before a first stable release:
 
-* Full ``libopus`` API coverage, minus Opus Custom
+* Full ``libopus`` API coverage, minus the Multistream API and Opus Custom
 * Documentation work
 * Basic test coverage
 
