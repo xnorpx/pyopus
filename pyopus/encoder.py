@@ -6,6 +6,7 @@ from __future__ import unicode_literals, absolute_import
 
 __all__ = [
         'OpusEncoder',
+        'FloatOpusEncoder',
         ]
 
 from threading import Lock
@@ -20,8 +21,10 @@ from . import utils
 PAYLOAD_BUFFER_SIZE = 4096
 
 
-class OpusEncoder(base.OpusCodec):
+class BaseOpusEncoder(base.OpusCodec):
     '''Opus encoder.'''
+
+    _encoder_fn = None
 
     def __init__(self, frequency, channels, application):
         # basic sanity check
@@ -35,7 +38,7 @@ class OpusEncoder(base.OpusCodec):
 
         # dispatch to encode functions with different sanity checking,
         # based on channel count
-        self._do_encode_dispatch = (
+        self.encode = (
                 self._stereo_encode
                 if channels == 2
                 else self._mono_encode
@@ -63,20 +66,20 @@ class OpusEncoder(base.OpusCodec):
                 self._mode,
                 )
 
-    def _stereo_encode(self, encoder_fn, pcm):
+    def _stereo_encode(self, pcm):
         # basic frame-size check
         frame_size, rem = divmod(len(pcm), 2)
         if rem != 0:
             raise ValueError('PCM data length is not even for stereo input')
 
-        return self._do_actual_encode(encoder_fn, pcm, frame_size)
+        return self._do_encode(pcm, frame_size)
 
-    def _mono_encode(self, encoder_fn, pcm):
-        return self._do_actual_encode(encoder_fn, pcm, len(pcm))
+    def _mono_encode(self, pcm):
+        return self._do_encode(pcm, len(pcm))
 
-    def _do_actual_encode(self, encoder_fn, pcm, frame_size):
+    def _do_encode(self, pcm, frame_size):
         with self._buf_lock:
-            len_payload = encoder_fn(
+            len_payload = self._encoder_fn(
                     self._state,
                     pcm,
                     frame_size,
@@ -84,13 +87,6 @@ class OpusEncoder(base.OpusCodec):
                     PAYLOAD_BUFFER_SIZE,
                     )
             return self._buf[:len_payload]
-
-    # Encoding functions
-    def encode(self, pcm):
-        return self._do_encode_dispatch(llinterface.encode, pcm)
-
-    def encode_float(self, pcm):
-        return self._do_encode_dispatch(llinterface.encode_float, pcm)
 
     # Generic CTLs
     def reset_state(self):
@@ -238,6 +234,14 @@ class OpusEncoder(base.OpusCodec):
     @prediction_disabled.setter
     def prediction_disabled(self, value):
         ctl.encoder_set_prediction_disabled(self._state, value)
+
+
+class OpusEncoder(BaseOpusEncoder):
+    _encoder_fn = staticmethod(llinterface.encode)
+
+
+class FloatOpusEncoder(BaseOpusEncoder):
+    _encoder_fn = staticmethod(llinterface.encode_float)
 
 
 # vim:set ai et ts=4 sw=4 sts=4 fenc=utf-8:
