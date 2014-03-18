@@ -46,7 +46,7 @@ class BaseOpusDecoder(base.OpusCodec):
         super(BaseOpusDecoder, self).__init__()
 
         # initialize decoder output buffer and locking
-        self._out = binding.ffi.new(
+        self._pcm = binding.ffi.new(
                 self._buf_type,
                 PCM_BUFFER_SAMPLES * channels
                 )
@@ -65,11 +65,11 @@ class BaseOpusDecoder(base.OpusCodec):
                     self._state,
                     data,
                     len(data),
-                    self._out,
+                    self._pcm,
                     PCM_BUFFER_SAMPLES,
                     0,
                     )
-            return list(self._out[0:num_samples])
+            return list(self._pcm[0:num_samples])
 
     # Generic (slow) path for PLC and FEC
     def decode_plc_fec(self, data=None, frame_duration=None, decode_fec=False):
@@ -92,11 +92,11 @@ class BaseOpusDecoder(base.OpusCodec):
                     self._state,
                     data,
                     len_data,
-                    self._out,
+                    self._pcm,
                     frame_size,
                     1 if decode_fec else 0,
                     )
-            return list(self._out[0:num_samples])
+            return list(self._pcm[0:num_samples])
 
     def reset_state(self):
         ctl.decoder_reset_state(self._state)
