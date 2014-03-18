@@ -23,6 +23,13 @@ __all__ = [
         'decode_float',
         'decoder_ctl',
         'decoder_destroy',
+        'packet_get_bandwidth',
+        'packet_get_samples_per_frame',
+        'packet_get_nb_channels',
+        'packet_get_nb_frames',
+        'packet_get_nb_samples',
+        'decoder_get_nb_samples',
+        'pcm_soft_clip',
 
         'repacketizer_get_size',
         'repacketizer_init',
