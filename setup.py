@@ -7,6 +7,7 @@ from setuptools import setup
 from setuptools import find_packages
 
 from pyopus import __version__
+from pyopus import binding
 
 
 setup(
@@ -35,6 +36,8 @@ setup(
             'Topic :: Multimedia :: Sound/Audio'
             'Topic :: Software Development :: Libraries :: Python Modules',
             ],
+        zip_safe=False,
+        ext_modules=[binding.ffi.verifier.get_extension(), ],
         )
 
 
