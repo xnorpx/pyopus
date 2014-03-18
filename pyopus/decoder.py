@@ -32,7 +32,7 @@ class BaseOpusDecoder(base.OpusCodec):
     _buf_type = None
     _decoder_fn = None
 
-    def __init__(self, frequency, channels):
+    def __init__(self, frequency=48000, channels=2):
         # basic sanity check
         utils.check_freq(frequency)
         utils.check_channels(channels)
