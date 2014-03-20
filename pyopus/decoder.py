@@ -69,7 +69,7 @@ class BaseOpusDecoder(base.OpusCodec):
                     PCM_BUFFER_SAMPLES,
                     0,
                     )
-            return list(self._pcm[0:num_samples])
+            return list(self._pcm[0:num_samples * self._channels])
 
     # Generic (slow) path for PLC and FEC
     def decode_plc_fec(self, data=None, frame_duration=None, decode_fec=False):
