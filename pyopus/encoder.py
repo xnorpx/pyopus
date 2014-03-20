@@ -45,7 +45,7 @@ class BaseOpusEncoder(base.OpusCodec):
                 )
 
         # initialize state
-        super(OpusEncoder, self).__init__()
+        super(BaseOpusEncoder, self).__init__()
 
         # output payload buffer
         # Since the codec is stateful, allowing reentrancy is pointless.
