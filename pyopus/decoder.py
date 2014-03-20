@@ -123,7 +123,7 @@ class BaseOpusDecoder(base.OpusCodec):
 
 
 class OpusDecoder(BaseOpusDecoder):
-    _buf_type = 'short[]'
+    _buf_type = 'int16_t[]'
     _decoder_fn = staticmethod(llinterface.decode)
 
 
