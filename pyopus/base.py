@@ -1,36 +1,72 @@
-# -*- coding: utf-8 -*-
+"""
+This module provides internal classes for managing Opus codec states.
 
-'''Opus encoder.'''
+Classes:
+    - ManagedState: Internal class for managing a chunk of memory storing codec state.
+    - OpusCodec: Base class for Opus encoder and decoder.
+"""
 
-from __future__ import unicode_literals, absolute_import
-
-__all__ = [
-        'ManagedState',
-        'OpusCodec',
-        ]
-
-from . import binding
+from typing import Any
+from .binding import ffi
 
 
-class ManagedState(object):
-    '''Internal class for managing a chunk of memory storing codec state.'''
+__all__: list[str] = [
+    "ManagedState",
+    "OpusCodec",
+]
 
-    def __init__(self):
-        self._state = binding.ffi.new('char[]', self._get_state_size())
+
+class ManagedState:
+    """
+    Internal class for managing a chunk of memory storing codec state.
+
+    Attributes:
+        _state (Any): The allocated memory buffer for codec state.
+    """
+
+    def __init__(self) -> None:
+        """
+        Initialize the ManagedState by allocating memory and initializing the codec state.
+
+        Raises:
+            NotImplementedError: If `_get_state_size` or `_init_state` are not implemented in subclasses.
+        """
+        state_size: int = self._get_state_size()
+        self._state: Any = ffi.new("char[]", state_size)
         self._init_state()
 
-    def _get_state_size(self):
-        raise NotImplementedError
+    def _get_state_size(self) -> int:
+        """
+        Retrieve the size of the codec state in bytes.
 
-    def _init_state(self):
-        raise NotImplementedError
+        This method should be implemented by subclasses to specify the required state size.
+
+        Raises:
+            NotImplementedError: If not implemented in the subclass.
+        """
+        raise NotImplementedError("Subclasses must implement `_get_state_size` method.")
+
+    def _init_state(self) -> None:
+        """
+        Initialize the codec state.
+
+        This method should be implemented by subclasses to perform state-specific initialization.
+
+        Raises:
+            NotImplementedError: If not implemented in the subclass.
+        """
+        raise NotImplementedError("Subclasses must implement `_init_state` method.")
 
 
 class OpusCodec(ManagedState):
-    '''Baseclass for Opus encoder and decoder.'''
+    """
+    Base class for Opus encoder and decoder.
 
-    def __init__(self):
-        super(OpusCodec, self).__init__()
+    Inherits from `ManagedState` and provides a foundation for specific codec implementations.
+    """
 
-
-# vim:set ai et ts=4 sw=4 sts=4 fenc=utf-8:
+    def __init__(self) -> None:
+        """
+        Initialize the OpusCodec by calling the parent class initializer.
+        """
+        super().__init__()

@@ -1,85 +1,166 @@
-# -*- coding: utf-8 -*-
+"""
+This module provides Python bindings for the Opus codec library using cffi.
+It includes functions for encoding and decoding audio, managing Opus encoders and decoders,
+handling errors, and manipulating Opus packets and repacketizers.
 
-'''Low-level interface to libopus.'''
+Functions:
+    - strerror: Retrieve a human-readable error message for a given Opus error code.
+    - get_version_string: Get the Opus library version string.
+    - encoder_get_size: Get the size of an Opus encoder state.
+    - encoder_create: Create a new Opus encoder.
+    - encoder_init: Initialize an existing Opus encoder.
+    - encode: Encode PCM data into Opus.
+    - encode_float: Encode floating-point PCM data into Opus.
+    - encoder_destroy: Destroy an Opus encoder.
+    - encoder_ctl: Control operations on an Opus encoder.
+    - decoder_get_size: Get the size of an Opus decoder state.
+    - decoder_create: Create a new Opus decoder.
+    - decoder_init: Initialize an existing Opus decoder.
+    - decode: Decode Opus data into PCM.
+    - decode_float: Decode Opus data into floating-point PCM.
+    - decoder_ctl: Control operations on an Opus decoder.
+    - decoder_destroy: Destroy an Opus decoder.
+    - packet_get_bandwidth: Retrieve the bandwidth of an Opus packet.
+    - packet_get_samples_per_frame: Get the number of samples per frame in an Opus packet.
+    - packet_get_nb_channels: Get the number of channels in an Opus packet.
+    - packet_get_nb_frames: Get the number of frames in an Opus packet.
+    - packet_get_nb_samples: Get the number of samples in an Opus packet.
+    - decoder_get_nb_samples: Get the number of samples produced by a decoder for a given packet.
+    - pcm_soft_clip: Apply soft clipping to PCM data.
+    - repacketizer_get_size: Get the size of an Opus repacketizer state.
+    - repacketizer_init: Initialize an existing Opus repacketizer.
+    - repacketizer_create: Create a new Opus repacketizer.
+    - repacketizer_destroy: Destroy an Opus repacketizer.
+"""
 
-from __future__ import unicode_literals, absolute_import
+from enum import Enum
+from typing import Any, List, Optional, Union
 
-__all__ = [
-        'strerror',
-        'get_version_string',
+from .binding import C, ffi
+from .constants import OK, OPUS_INVALID_PACKET  # Assuming OPUS_INVALID_PACKET exists
 
-        'encoder_get_size',
-        'encoder_create',
-        'encoder_init',
-        'encode',
-        'encode_float',
-        'encoder_destroy',
-        'encoder_ctl',
 
-        'decoder_get_size',
-        'decoder_create',
-        'decoder_init',
-        'decode',
-        'decode_float',
-        'decoder_ctl',
-        'decoder_destroy',
-        'packet_get_bandwidth',
-        'packet_get_samples_per_frame',
-        'packet_get_nb_channels',
-        'packet_get_nb_frames',
-        'packet_get_nb_samples',
-        'decoder_get_nb_samples',
-        'pcm_soft_clip',
-
-        'repacketizer_get_size',
-        'repacketizer_init',
-        'repacketizer_create',
-        'repacketizer_destroy',
-        ]
-
-from .binding import ffi, C
-from .constants import OK
+__all__: list[str] = [
+    "strerror",
+    "get_version_string",
+    "encoder_get_size",
+    "encoder_create",
+    "encoder_init",
+    "encode",
+    "encode_float",
+    "encoder_destroy",
+    "encoder_ctl",
+    "decoder_get_size",
+    "decoder_create",
+    "decoder_init",
+    "decode",
+    "decode_float",
+    "decoder_ctl",
+    "decoder_destroy",
+    "packet_get_bandwidth",
+    "packet_get_samples_per_frame",
+    "packet_get_nb_channels",
+    "packet_get_nb_frames",
+    "packet_get_nb_samples",
+    "decoder_get_nb_samples",
+    "pcm_soft_clip",
+    "repacketizer_get_size",
+    "repacketizer_init",
+    "repacketizer_create",
+    "repacketizer_destroy",
+]
 
 
 class OpusError(RuntimeError):
-    def __init__(self, errno):
+    """
+    Exception raised for errors returned by Opus library functions.
+
+    Attributes:
+        errno (int): The error code returned by the Opus function.
+        message (str): A human-readable message describing the error.
+    """
+
+    def __init__(self, errno: int):
+        """
+        Initialize the OpusError with an error number.
+
+        Args:
+            errno (int): The error code returned by the Opus function.
+        """
         msg = strerror(errno)
-        super(OpusError, self).__init__(errno, msg)
+        super().__init__(errno, msg)
+        self.errno: int = errno
+        self.message: str = msg
 
-        self.errno, self.message = errno, msg
+    def __str__(self) -> str:
+        """
+        Return the string representation of the error.
 
-    def __unicode__(self):
-        return '[Opus Error {0}] {1}'.format(self.errno, self.message)
-
-    def __str__(self):
-        return str(self.__unicode__())
-
-
-# const char *opus_strerror(int error);
-def strerror(error):
-    return ffi.string(C.opus_strerror(error)).decode('utf-8')
+        Returns:
+            str: A formatted error message.
+        """
+        return f"[Opus Error {self.errno}] {self.message}"
 
 
-# const char *opus_get_version_string(void);
-def get_version_string():
-    return ffi.string(C.opus_get_version_string()).decode('utf-8')
+def strerror(error: int) -> str:
+    """
+    Retrieve a human-readable error message for a given Opus error code.
+
+    Args:
+        error (int): The Opus error code.
+
+    Returns:
+        str: A descriptive error message.
+    """
+    return ffi.string(C.opus_strerror(error)).decode("utf-8")
 
 
-# int opus_encoder_get_size(int channels);
-def encoder_get_size(channels):
+def get_version_string() -> str:
+    """
+    Get the Opus library version string.
+
+    Returns:
+        str: The version string of the Opus library.
+    """
+    return ffi.string(C.opus_get_version_string()).decode("utf-8")
+
+
+def encoder_get_size(channels: int) -> int:
+    """
+    Get the size of an Opus encoder state for a given number of channels.
+
+    Args:
+        channels (int): The number of audio channels.
+
+    Returns:
+        int: The size in bytes of the Opus encoder state.
+    """
     return C.opus_encoder_get_size(channels)
 
 
-# OpusEncoder *opus_encoder_create(
-#         opus_int32 Fs,
-#         int channels,
-#         int application,
-#         int *error
-#         );
-def encoder_create(Fs, channels, application):
-    error_p = ffi.new('int[1]')
+class OpusApplication(Enum):
+    VOIP = 2048  # Replace with actual constant value from constants.APPLICATION_VOIP
+    AUDIO = 2049  # Replace with actual constant value from constants.APPLICATION_AUDIO
+    RESTRICTED_LOWDELAY = 2051  # Replace with actual constant value from constants.APPLICATION_RESTRICTED_LOWDELAY
 
-    st = C.opus_encoder_create(Fs, channels, application, error_p)
+
+def encoder_create(Fs: int, channels: int, application: OpusApplication) -> Any:
+    """
+    Create a new Opus encoder.
+
+    Args:
+        Fs (int): Sampling rate (Hz).
+        channels (int): Number of audio channels.
+        application (OpusApplication): The encoding application (e.g., VOIP, AUDIO).
+
+    Returns:
+        Any: A pointer to the newly created OpusEncoder.
+
+    Raises:
+        OpusError: If the encoder creation fails.
+    """
+    error_p = ffi.new("int[1]")
+    st = C.opus_encoder_create(Fs, channels, application.value, error_p)
     error = error_p[0]
 
     if error != OK:
@@ -88,27 +169,48 @@ def encoder_create(Fs, channels, application):
     return st
 
 
-# int opus_encoder_init(
-#         OpusEncoder *st,
-#         opus_int32 Fs,
-#         int channels,
-#         int application
-#         );
-def encoder_init(st, Fs, channels, application):
-    error = C.opus_encoder_init(st, Fs, channels, application)
+def encoder_init(st: Any, Fs: int, channels: int, application: OpusApplication) -> None:
+    """
+    Initialize an existing Opus encoder.
+
+    Args:
+        st (Any): The OpusEncoder to initialize.
+        Fs (int): Sampling rate (Hz).
+        channels (int): Number of audio channels.
+        application (OpusApplication): The encoding application.
+
+    Raises:
+        OpusError: If the encoder initialization fails.
+    """
+    error = C.opus_encoder_init(st, Fs, channels, application.value)
 
     if error != OK:
         raise OpusError(error)
 
 
-# opus_int32 opus_encode(
-#         OpusEncoder *st,
-#         const opus_int16 *pcm,
-#         int frame_size,
-#         unsigned char *data,
-#         opus_int32 max_data_bytes
-#         );
-def encode(st, pcm, frame_size, data, max_data_bytes):
+def encode(
+    st: Any,
+    pcm: bytes,
+    frame_size: int,
+    data: bytes,
+    max_data_bytes: int
+) -> int:
+    """
+    Encode PCM data into Opus format.
+
+    Args:
+        st (Any): The OpusEncoder.
+        pcm (bytes): PCM audio data (int16).
+        frame_size (int): Number of samples per channel.
+        data (bytes): Buffer to store encoded Opus data.
+        max_data_bytes (int): Maximum number of bytes that can be written to 'data'.
+
+    Returns:
+        int: Number of bytes written to 'data'.
+
+    Raises:
+        OpusError: If encoding fails.
+    """
     result = C.opus_encode(st, pcm, frame_size, data, max_data_bytes)
 
     if result < 0:
@@ -117,14 +219,29 @@ def encode(st, pcm, frame_size, data, max_data_bytes):
     return result
 
 
-# opus_int32 opus_encode_float(
-#         OpusEncoder *st,
-#         const float *pcm,
-#         int frame_size,
-#         unsigned char *data,
-#         opus_int32 max_data_bytes
-#         );
-def encode_float(st, pcm, frame_size, data, max_data_bytes):
+def encode_float(
+    st: Any,
+    pcm: bytes,
+    frame_size: int,
+    data: bytes,
+    max_data_bytes: int
+) -> int:
+    """
+    Encode floating-point PCM data into Opus format.
+
+    Args:
+        st (Any): The OpusEncoder.
+        pcm (bytes): PCM audio data (float).
+        frame_size (int): Number of samples per channel.
+        data (bytes): Buffer to store encoded Opus data.
+        max_data_bytes (int): Maximum number of bytes that can be written to 'data'.
+
+    Returns:
+        int: Number of bytes written to 'data'.
+
+    Raises:
+        OpusError: If encoding fails.
+    """
     result = C.opus_encode_float(st, pcm, frame_size, data, max_data_bytes)
 
     if result < 0:
@@ -133,28 +250,62 @@ def encode_float(st, pcm, frame_size, data, max_data_bytes):
     return result
 
 
-# void opus_encoder_destroy(OpusEncoder *st);
-def encoder_destroy(st):
+def encoder_destroy(st: Any) -> None:
+    """
+    Destroy an Opus encoder and free its resources.
+
+    Args:
+        st (Any): The OpusEncoder to destroy.
+    """
     C.opus_encoder_destroy(st)
 
 
-# int opus_encoder_ctl(OpusEncoder *st, int request, ...);
-def encoder_ctl(st, request, *args):
+def encoder_ctl(st: Any, request: int, *args: Any) -> None:
+    """
+    Control operations on an Opus encoder.
+
+    Args:
+        st (Any): The OpusEncoder.
+        request (int): The control request code.
+        *args (Any): Additional arguments for the control request.
+
+    Raises:
+        OpusError: If the control operation fails.
+    """
     error = C.opus_encoder_ctl(st, request, *args)
 
     if error != OK:
         raise OpusError(error)
 
 
-# int opus_decoder_get_size(int channels);
-def decoder_get_size(channels):
+def decoder_get_size(channels: int) -> int:
+    """
+    Get the size of an Opus decoder state for a given number of channels.
+
+    Args:
+        channels (int): Number of audio channels.
+
+    Returns:
+        int: The size in bytes of the Opus decoder state.
+    """
     return C.opus_decoder_get_size(channels)
 
 
-# OpusDecoder *opus_decoder_create(opus_int32 Fs, int channels, int *error);
-def decoder_create(Fs, channels):
-    error_p = ffi.new('int[1]')
+def decoder_create(Fs: int, channels: int) -> Any:
+    """
+    Create a new Opus decoder.
 
+    Args:
+        Fs (int): Sampling rate (Hz).
+        channels (int): Number of audio channels.
+
+    Returns:
+        Any: A pointer to the newly created OpusDecoder.
+
+    Raises:
+        OpusError: If the decoder creation fails.
+    """
+    error_p = ffi.new("int[1]")
     st = C.opus_decoder_create(Fs, channels, error_p)
     error = error_p[0]
 
@@ -164,24 +315,50 @@ def decoder_create(Fs, channels):
     return st
 
 
-# int opus_decoder_init(OpusDecoder *st, opus_int32 Fs, int channels);
-def decoder_init(st, Fs, channels):
+def decoder_init(st: Any, Fs: int, channels: int) -> None:
+    """
+    Initialize an existing Opus decoder.
+
+    Args:
+        st (Any): The OpusDecoder to initialize.
+        Fs (int): Sampling rate (Hz).
+        channels (int): Number of audio channels.
+
+    Raises:
+        OpusError: If the decoder initialization fails.
+    """
     error = C.opus_decoder_init(st, Fs, channels)
 
     if error != OK:
         raise OpusError(error)
 
 
-# int opus_decode(
-#         OpusDecoder *st,
-#         const unsigned char *data,
-#         opus_int32 len,
-#         opus_int16 *pcm,
-#         int frame_size,
-#         int decode_fec
-#         );
-def decode(st, data, len, pcm, frame_size, decode_fec):
-    result = C.opus_decode(st, data, len, pcm, frame_size, decode_fec)
+def decode(
+    st: Any,
+    data: bytes,
+    length: int,
+    pcm: bytes,
+    frame_size: int,
+    decode_fec: int
+) -> int:
+    """
+    Decode Opus data into PCM format.
+
+    Args:
+        st (Any): The OpusDecoder.
+        data (bytes): Encoded Opus data.
+        length (int): Number of bytes in 'data'.
+        pcm (bytes): Buffer to store decoded PCM data (int16).
+        frame_size (int): Number of samples per channel.
+        decode_fec (int): Decode in-band forward error correction.
+
+    Returns:
+        int: Number of samples decoded per channel.
+
+    Raises:
+        OpusError: If decoding fails.
+    """
+    result = C.opus_decode(st, data, length, pcm, frame_size, decode_fec)
 
     if result < 0:
         raise OpusError(result)
@@ -189,16 +366,32 @@ def decode(st, data, len, pcm, frame_size, decode_fec):
     return result
 
 
-# int opus_decode_float(
-#         OpusDecoder *st,
-#         const unsigned char *data,
-#         opus_int32 len,
-#         float *pcm,
-#         int frame_size,
-#         int decode_fec
-#         );
-def decode_float(st, data, len, pcm, frame_size, decode_fec):
-    result = C.opus_decode_float(st, data, len, pcm, frame_size, decode_fec)
+def decode_float(
+    st: Any,
+    data: bytes,
+    length: int,
+    pcm: bytes,
+    frame_size: int,
+    decode_fec: int
+) -> int:
+    """
+    Decode Opus data into floating-point PCM format.
+
+    Args:
+        st (Any): The OpusDecoder.
+        data (bytes): Encoded Opus data.
+        length (int): Number of bytes in 'data'.
+        pcm (bytes): Buffer to store decoded PCM data (float).
+        frame_size (int): Number of samples per channel.
+        decode_fec (int): Decode in-band forward error correction.
+
+    Returns:
+        int: Number of samples decoded per channel.
+
+    Raises:
+        OpusError: If decoding fails.
+    """
+    result = C.opus_decode_float(st, data, length, pcm, frame_size, decode_fec)
 
     if result < 0:
         raise OpusError(result)
@@ -206,46 +399,69 @@ def decode_float(st, data, len, pcm, frame_size, decode_fec):
     return result
 
 
-# int opus_decoder_ctl(OpusDecoder *st, int request, ...);
-def decoder_ctl(st, request, *args):
+def decoder_ctl(st: Any, request: int, *args: Any) -> None:
+    """
+    Control operations on an Opus decoder.
+
+    Args:
+        st (Any): The OpusDecoder.
+        request (int): The control request code.
+        *args (Any): Additional arguments for the control request.
+
+    Raises:
+        OpusError: If the control operation fails.
+    """
     error = C.opus_decoder_ctl(st, request, *args)
 
     if error != OK:
         raise OpusError(error)
 
 
-# void opus_decoder_destroy(OpusDecoder *st);
-def decoder_destroy(st):
+def decoder_destroy(st: Any) -> None:
+    """
+    Destroy an Opus decoder and free its resources.
+
+    Args:
+        st (Any): The OpusDecoder to destroy.
+    """
     C.opus_decoder_destroy(st)
 
 
-# int opus_packet_parse(
-#         const unsigned char *data,
-#         opus_int32 len,
-#         unsigned char *out_toc,
-#         const unsigned char *frames[48],
-#         opus_int16 size[48],
-#         int *payload_offset
-#         );
-# This is an internal function according to the libopus documentation, so
-# we don't wrap it here.
+def packet_get_bandwidth(data: bytes) -> int:
+    """
+    Retrieve the bandwidth of an Opus packet.
 
-# int opus_packet_get_bandwidth(const unsigned char *data);
-def packet_get_bandwidth(data):
+    Args:
+        data (bytes): Encoded Opus packet.
+
+    Returns:
+        int: The bandwidth of the packet.
+
+    Raises:
+        OpusError: If the packet is invalid.
+    """
     result = C.opus_packet_get_bandwidth(data)
 
     if result < 0:
-        # actually it is an OPUS_INVALID_PACKET, according to docs
         raise OpusError(result)
 
     return result
 
 
-# int opus_packet_get_samples_per_frame(
-#         const unsigned char *data,
-#         opus_int32 Fs
-#         );
-def packet_get_samples_per_frame(data, Fs):
+def packet_get_samples_per_frame(data: bytes, Fs: int) -> int:
+    """
+    Get the number of samples per frame in an Opus packet.
+
+    Args:
+        data (bytes): Encoded Opus packet.
+        Fs (int): Sampling rate (Hz).
+
+    Returns:
+        int: Number of samples per frame.
+
+    Raises:
+        OpusError: If the packet is invalid.
+    """
     result = C.opus_packet_get_samples_per_frame(data, Fs)
 
     if result < 0:
@@ -254,8 +470,19 @@ def packet_get_samples_per_frame(data, Fs):
     return result
 
 
-# int opus_packet_get_nb_channels(const unsigned char *data);
-def packet_get_nb_channels(data):
+def packet_get_nb_channels(data: bytes) -> int:
+    """
+    Get the number of channels in an Opus packet.
+
+    Args:
+        data (bytes): Encoded Opus packet.
+
+    Returns:
+        int: Number of audio channels.
+
+    Raises:
+        OpusError: If the packet is invalid.
+    """
     result = C.opus_packet_get_nb_channels(data)
 
     if result < 0:
@@ -264,9 +491,21 @@ def packet_get_nb_channels(data):
     return result
 
 
-# int opus_packet_get_nb_frames(const unsigned char packet[], opus_int32 len);
-def packet_get_nb_frames(packet, len):
-    result = C.opus_packet_get_nb_frames(packet, len)
+def packet_get_nb_frames(packet: bytes, length: int) -> int:
+    """
+    Get the number of frames in an Opus packet.
+
+    Args:
+        packet (bytes): Encoded Opus packet.
+        length (int): Number of bytes in 'packet'.
+
+    Returns:
+        int: Number of frames in the packet.
+
+    Raises:
+        OpusError: If the packet is invalid.
+    """
+    result = C.opus_packet_get_nb_frames(packet, length)
 
     if result < 0:
         raise OpusError(result)
@@ -274,13 +513,22 @@ def packet_get_nb_frames(packet, len):
     return result
 
 
-# int opus_packet_get_nb_samples(
-#         const unsigned char packet[],
-#         opus_int32 len,
-#         opus_int32 Fs
-#         );
-def packet_get_nb_samples(packet, len, Fs):
-    result = C.opus_packet_get_nb_samples(packet, len, Fs)
+def packet_get_nb_samples(packet: bytes, length: int, Fs: int) -> int:
+    """
+    Get the number of samples in an Opus packet.
+
+    Args:
+        packet (bytes): Encoded Opus packet.
+        length (int): Number of bytes in 'packet'.
+        Fs (int): Sampling rate (Hz).
+
+    Returns:
+        int: Number of samples in the packet.
+
+    Raises:
+        OpusError: If the packet is invalid.
+    """
+    result = C.opus_packet_get_nb_samples(packet, length, Fs)
 
     if result < 0:
         raise OpusError(result)
@@ -288,13 +536,22 @@ def packet_get_nb_samples(packet, len, Fs):
     return result
 
 
-# int opus_decoder_get_nb_samples(
-#         const OpusDecoder *dec,
-#         const unsigned char packet[],
-#         opus_int32 len
-#         );
-def decoder_get_nb_samples(dec, packet, len):
-    result = C.opus_decoder_get_nb_samples(dec, packet, len)
+def decoder_get_nb_samples(dec: Any, packet: bytes, length: int) -> int:
+    """
+    Get the number of samples produced by a decoder for a given packet.
+
+    Args:
+        dec (Any): The OpusDecoder.
+        packet (bytes): Encoded Opus packet.
+        length (int): Number of bytes in 'packet'.
+
+    Returns:
+        int: Number of samples decoded.
+
+    Raises:
+        OpusError: If the packet is invalid.
+    """
+    result = C.opus_decoder_get_nb_samples(dec, packet, length)
 
     if result < 0:
         raise OpusError(result)
@@ -302,71 +559,78 @@ def decoder_get_nb_samples(dec, packet, len):
     return result
 
 
-# void opus_pcm_soft_clip(
-#         float *pcm,
-#         int frame_size,
-#         int channels,
-#         float *softclip_mem
-#         );
-def pcm_soft_clip(pcm, frame_size, channels, softclip_mem):
+def pcm_soft_clip(
+    pcm: bytes,
+    frame_size: int,
+    channels: int,
+    softclip_mem: bytes
+) -> None:
+    """
+    Apply soft clipping to PCM data to prevent clipping.
+
+    Args:
+        pcm (bytes): PCM audio data (float).
+        frame_size (int): Number of samples per channel.
+        channels (int): Number of audio channels.
+        softclip_mem (bytes): Memory buffer for soft clipping state.
+    """
     C.opus_pcm_soft_clip(pcm, frame_size, channels, softclip_mem)
 
 
-# int opus_repacketizer_get_size(void);
-def repacketizer_get_size():
+def repacketizer_get_size() -> int:
+    """
+    Get the size of an Opus repacketizer state.
+
+    Returns:
+        int: The size in bytes of the Opus repacketizer state.
+    """
     return C.opus_repacketizer_get_size()
 
 
-# OpusRepacketizer *opus_repacketizer_init(OpusRepacketizer *rp);
-def repacketizer_init(rp):
-    return C.opus_repacketizer_init(rp)
+def repacketizer_init(rp: Any) -> Any:
+    """
+    Initialize an existing Opus repacketizer.
+
+    Args:
+        rp (Any): The OpusRepacketizer to initialize.
+
+    Returns:
+        Any: The initialized OpusRepacketizer.
+
+    Raises:
+        OpusError: If initialization fails.
+    """
+    result = C.opus_repacketizer_init(rp)
+
+    if result is None:
+        raise OpusError(OPUS_INVALID_PACKET)
+
+    return result
 
 
-# OpusRepacketizer *opus_repacketizer_create(void);
-def repacketizer_create():
-    return C.opus_repacketizer_create()
+def repacketizer_create() -> Any:
+    """
+    Create a new Opus repacketizer.
+
+    Returns:
+        Any: A pointer to the newly created OpusRepacketizer.
+
+    Raises:
+        OpusError: If the repacketizer creation fails.
+    """
+    rp = C.opus_repacketizer_create()
+
+    if rp is None:
+        raise OpusError(OPUS_INVALID_PACKET)
+
+    return rp
 
 
-# void opus_repacketizer_destroy(OpusRepacketizer *rp);
-def repacketizer_destroy(rp):
+def repacketizer_destroy(rp: Any) -> None:
+    """
+    Destroy an Opus repacketizer and free its resources.
+
+    Args:
+        rp (Any): The OpusRepacketizer to destroy.
+    """
     C.opus_repacketizer_destroy(rp)
-
-
-# int opus_repacketizer_cat(
-#         OpusRepacketizer *rp,
-#         const unsigned char *data,
-#         opus_int32 len
-#         );
-# opus_int32 opus_repacketizer_out_range(
-#         OpusRepacketizer *rp,
-#         int begin,
-#         int end,
-#         unsigned char *data,
-#         opus_int32 maxlen
-#         );
-# int opus_repacketizer_get_nb_frames(OpusRepacketizer *rp);
-# opus_int32 opus_repacketizer_out(
-#         OpusRepacketizer *rp,
-#         unsigned char *data,
-#         opus_int32 maxlen
-#         );
-# int opus_packet_pad(
-#         unsigned char *data,
-#         opus_int32 len,
-#         opus_int32 new_len
-#         );
-# opus_int32 opus_packet_unpad(unsigned char *data, opus_int32 len);
-# int opus_multistream_packet_pad(
-#         unsigned char *data,
-#         opus_int32 len,
-#         opus_int32 new_len,
-#         int nb_streams
-#         );
-# opus_int32 opus_multistream_packet_unpad(
-#         unsigned char *data,
-#         opus_int32 len,
-#         int nb_streams
-#         );
-
-
-# vim:set ai et ts=4 sw=4 sts=4 fenc=utf-8:

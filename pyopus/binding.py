@@ -1,18 +1,15 @@
-# -*- coding: utf-8 -*-
-
-'''libopus CFFI binding.'''
-
-from __future__ import unicode_literals, absolute_import
+from __future__ import absolute_import, unicode_literals
 
 __all__ = [
-        'ffi',
-        'C',
-        ]
+    "ffi",
+    "C",
+]
 
 import cffi
 
 ffi = cffi.FFI()
-ffi.cdef('''
+ffi.cdef(
+    """
 /* opus_types.h */
 typedef int16_t opus_int16;
 typedef uint16_t opus_uint16;
@@ -149,11 +146,15 @@ int opus_packet_pad(unsigned char *data, opus_int32 len, opus_int32 new_len);
 opus_int32 opus_packet_unpad(unsigned char *data, opus_int32 len);
 int opus_multistream_packet_pad(unsigned char *data, opus_int32 len, opus_int32 new_len, int nb_streams);
 opus_int32 opus_multistream_packet_unpad(unsigned char *data, opus_int32 len, int nb_streams);
-''')
+"""
+)
 
-C = ffi.verify('''
+C = ffi.verify(
+    """
 #include <opus/opus.h>
-''', libraries=[str('opus')])
+""",
+    libraries=[str("opus")],
+)
 
 
 # vim:set ai et ts=4 sw=4 sts=4 fenc=utf-8:

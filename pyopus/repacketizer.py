@@ -1,29 +1,33 @@
-# -*- coding: utf-8 -*-
+from typing import Final
 
-'''Opus repacketizer.'''
+from . import base, llinterface
 
-from __future__ import unicode_literals, absolute_import
-
-__all__ = [
-        'OpusRepacketizer',
-        ]
-
-from . import base
-from . import llinterface
+__all__: list[str] = [
+    "OpusRepacketizer",
+]
 
 
 class OpusRepacketizer(base.ManagedState):
-    '''Opus repacketizer.'''
+    """Opus repacketizer."""
 
-    def __init__(self):
-        # initialize state
-        super(OpusRepacketizer, self).__init__()
+    def __init__(self) -> None:
+        """Initialize the Opus repacketizer state."""
+        super().__init__()
 
-    def _get_state_size(self):
+    def _get_state_size(self) -> int:
+        """
+        Retrieve the size of the repacketizer state.
+
+        Returns:
+            int: The size of the repacketizer state.
+        """
         return llinterface.repacketizer_get_size()
 
-    def _init_state(self):
+    def _init_state(self) -> None:
+        """
+        Initialize the repacketizer state.
+
+        Raises:
+            SomeException: If initialization fails (modify as appropriate).
+        """
         llinterface.repacketizer_init(self._state)
-
-
-# vim:set ai et ts=4 sw=4 sts=4 fenc=utf-8:
